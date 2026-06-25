@@ -149,10 +149,41 @@ The full parameter list, in the order they appear in the file:
 | 17 | `ks` | 0 | Inter-bead repulsion spring constant. 0 = disabled. |
 | 18 | `fl0` | 0.25 | Natural length for the inter-bead spring (µm), used only if ks > 0. |
 | 19 | `veloy` | 0.0 | Background flow velocity in y (µm/s). |
-| 20 | `F0` | 2.5 | Signal force amplitude applied as a square-wave drive to the first bead (after the 5 s transient). ★ |
+| 20 | `F0` | 2.5 | Signal force amplitude. Square-wave drive applied to the signal beads (see below) after the 5 s transient. ★ |
 | 21 | `Tsignal` | 0.1847 | Signal period (s). ★ |
 | 22 | `default_lambda` | 0.06 | Default per-bead coupling coefficient λ, which controls how trap stiffness varies with position in the chain. |
 | 23… | distances | 6.0 7.1 … | N−1 inter-bead distances (µm), one per gap. The key geometry parameter. ★ |
 | last N | lambdas | 0.06 × N | Per-bead λ values, one per bead. Overrides `default_lambda` individually if needed. |
 
 ★ Parameters you are most likely to want to change. All others can be left at their template values unless you have a specific reason to modify them.
+
+### Optional per-bead configuration blocks
+
+Three optional blocks can be appended after the lambda values to specify heterogeneous trap stiffness and control which beads receive the signal. All three are absent from the provided templates, in which case the engine falls back to the global `kx`/`ky` for every bead and applies the signal to bead 0 only.
+
+The blocks must appear in this order if used, and each block requires the preceding one to be present:
+
+**Block 1 — per-bead x-stiffness** (N values):
+```
+<kx_0> <kx_1> ... <kx_{N-1}>
+```
+Replaces the global `kx` for each bead individually. The value is still scaled by the same distance-based H factor used in the uniform case, so relative heterogeneity combines with the geometry-driven correction.
+
+**Block 2 — per-bead y-stiffness** (N values, requires Block 1):
+```
+<ky_0> <ky_1> ... <ky_{N-1}>
+```
+Same as Block 1 but for the y direction.
+
+**Block 3 — signal bead list** (requires Blocks 1 and 2):
+```
+<n_signal> <bead_0> <bead_1> ... <bead_{n-1}>
+```
+The first value is the count of beads that receive the square-wave drive, followed by their 0-based indices. For example, `2 0 3` applies the force to beads 0 and 3.
+
+**Example** — 6-bead chain with increasing x-stiffness, uniform y-stiffness, and the signal applied to beads 0 and 5:
+```
+6 3 6.0 1.5 0.00005 100 0.006 0.5 10 1.5 10 70 50 200 0.3 0.0 0 0.25 0.0 2.5 0.18 0.06  6.0 7.1 8.0 9.0 9.9  0.06 0.06 0.06 0.06 0.06 0.06  8 9 10 11 12 13  10 10 10 10 10 10  2 0 5
+```
+
+When running a sweep or optimisation, if per-bead blocks are present in the template the scripts handle them automatically: sweeping `kx` or `ky` updates all per-bead values uniformly, and the mirror-geometry runs reverse the per-bead arrays along with the inter-bead distances.
