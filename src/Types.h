@@ -42,22 +42,24 @@ struct SimulationConfig {
     double f0_signal;
     double t_signal;
     double default_lambda;
-    
-    std::vector<double> inter_bead_distances; // For CHAIN: N-1 values
-    std::vector<double> lambdas;              // N values
-    std::vector<Vector2d> initial_positions;  // For ARBITRARY: N values
-    
+
+    std::vector<double> inter_bead_distances;
+    std::vector<double> lambdas;
+    std::vector<Vector2d> initial_positions;
+    std::vector<double> kx_per_bead;
+    std::vector<double> ky_per_bead;
+    std::vector<int> signal_beads;
+
     GeometryType geometry;
     bool use_rotne_prager = true;
 };
 
 struct State {
-    VectorXd positions;       // [x0, y0, x1, y1, ...]
-    VectorXd trap_offsets;    // offsets from reference positions
-    VectorXd reference_pos;   // fixed reference positions (eg Temp_d in CHAIN)
-    Vector2d stiffness;       // [kx, ky]
-    
-    explicit State(int n) 
+    VectorXd positions;
+    VectorXd trap_offsets;
+    VectorXd reference_pos;
+
+    explicit State(int n)
         : positions(2 * n), trap_offsets(2 * n), reference_pos(2 * n) {
         positions.setZero();
         trap_offsets.setZero();
